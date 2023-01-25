@@ -7,9 +7,17 @@ auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret, access_token, acc
 api = tweepy.API(auth)
 
 
-def tweet():
-    # Post the first tweet
-    tweet1 = api.update_status('Hello, world!')
+def tweet(dict):
 
-    # Post the second tweet in reply to the first
-    tweet2 = api.update_status('This is the second tweet in my thread.', in_reply_to_status_id=tweet1.id)
+    try:
+        # Post the first tweet
+        tweet = api.update_status(dict['title'])
+
+        for thread_item in dict['body']:
+            # Post the second tweet in reply to the first
+            tweet = api.update_status(thread_item, in_reply_to_status_id=tweet.id)
+
+        print('Tweet Successful')
+
+    except Exception as e:
+        print(e)
