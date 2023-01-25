@@ -159,34 +159,42 @@ def create_batches(text):
     return chunks
 
 
-def generate_summaries(prompt, title, text):
+def generate_summaries(prompt, text):
 
     print(f"Length of Text: {len(text['text'])}")
     batches = create_batches(text)
-    summaries = []
-    for i in range(5):
-        summary = ""
-        for batch in batches:
+    # summaries = []
+    summary = ""
+    for batch in batches:
 
-            new_prompt = prompt + batch
-            response = gpt3(new_prompt)
-            summary += response["choices"][0]['text']
+        new_prompt = prompt + batch
+        response = gpt3(new_prompt)
+        summary += response["choices"][0]['text']
 
-        # Split the string on the newline character
-        bullet_points = summary.split('\n')
+    # Split the string on the newline character
+    # bullet_points = summary.split('\n')
 
-        # Initialize an empty list to store the extracted bullet points
-        extracted_bullet_points = []
+    # # Initialize an empty list to store the extracted bullet points
+    # extracted_bullet_points = []
+    #
+    # # Iterate through the bullet points
+    # for bullet_point in bullet_points:
+    #     # Use a regex to match bullet points that start with a number and a period
+    #     if re.match(r'^[0-9]\.', bullet_point):
+    #         extracted_bullet_points.append(bullet_point[3:])
 
-        # Iterate through the bullet points
-        for bullet_point in bullet_points:
-            # Use a regex to match bullet points that start with a number and a period
-            if re.match(r'^[0-9]\.', bullet_point):
-                extracted_bullet_points.append(bullet_point[3:])
+    # summaries.append(extracted_bullet_points)
 
-        summaries.append(extracted_bullet_points)
+    return summary
 
-    return summaries
+def generate_tweets(text):
+    tweets = []
+    prompt = "summarize the key takeaways as a tweet: "
+    new_prompt = prompt + text
+    for i in range(10):
+        response = gpt3(new_prompt)
+        tweets.append(response["choices"][0]['text'])
+    return tweets
 
 def generate_titles(title):
     title_arr = [[title]]
@@ -261,7 +269,8 @@ def create_thread_from_clip(prompt, video_id):
     # new_title[0] += hashtag
 
     # Build Summaries
-    summaries = generate_summaries(prompt, title, text)
+    summaries = generate_summaries(prompt, text)
+    tweets = generate_tweets(summaries)
     summary = input_options(summaries)
     # if summary:
     #     # Tweet
@@ -270,28 +279,25 @@ def create_thread_from_clip(prompt, video_id):
 
 def create_thread_from_clipped_podcast(prompt, video_id):
 
-    yt = YouTube(f'https://www.youtube.com/watch?v={video_id}')
-
+    # yt = YouTube(f'https://www.youtube.com/watch?v={video_id}')
+    #
     # Download Video from YouTube
-    local_path, title, desc = download_video(yt)
-
+    # local_path, title, desc = download_video(yt)
+    #
     # Extract Sections from video
-    section_data = extract_section_data(desc)
+    # section_data = extract_section_data(desc)
     # clear_dir('clips')
-    split_sections(local_path, section_data)
+    # split_sections(local_path, section_data)
     time.sleep(30)
 
     for idx, filename in enumerate(sorted(os.listdir('clips'))):
-        if idx < 4:
-            continue
         try:
             # Speech to Text
             text = transcribe_audio("clips/" + filename)
             # Build Summaries
-            summaries = generate_summaries(prompt, title, text)
-            print(f'{filename.replace("_", " ").replace(".mp4", "")}\n')
-            # print(summaries)
-            summary = input_options(summaries)
+            summaries = generate_summaries(prompt, text)
+            tweets = generate_tweets(summaries)
+            input_options(tweets)
             print("\n\n\n")
             # if summary:
             #     print(summary)
@@ -309,5 +315,5 @@ if __name__ == '__main__':
     # prompt = "summarize the key take aways as bullet points like a philospher in the following format 1. first point \n 2. second point \n 3. third point: "
     # create_thread_from_clip(prompt, video_id)
 
-    prompt = "summarize the text like a philospher in one sentence in the following format 1. first point "
+    prompt = "summarize the key takeaways: "
     create_thread_from_clipped_podcast(prompt, video_id)
